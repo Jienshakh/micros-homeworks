@@ -25,14 +25,16 @@ services:
   createbuckets:
     image: minio/mc
     depends_on:
-      - storage
+      storage:
+        condition: service_healthy
     restart: on-failure
-    entrypoint: > 
-      /bin/sh -c "      
-      /usr/bin/mc config host add storage http://storage:9000 ${Storage_AccessKey-STORAGE_ACCESS_KEY} ${Storage_Secret-STORAGE_SECRET_KEY} &&
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set storage http://storage:9000 ${Storage_AccessKey-STORAGE_ACCESS_KEY} ${Storage_Secret-STORAGE_SECRET_KEY} &&
+      /usr/bin/mc ready storage &&
       /usr/bin/mc mb --ignore-existing storage/${Storage_Bucket:-data} &&
-      /usr/bin/mc policy set download storage/${Storage_Bucket:-data} &&
-      exit 0;
+      /usr/bin/mc anonymous set download storage/${Storage_Bucket:-data} ||
+      true
       "
 
   uploader:
