@@ -27,6 +27,71 @@
 
 Обоснуйте свой выбор.
 
+### Решение для CI/CD процесса разработки
+
+#### Стек технологий
+
+##### 1. **GitLab** - Система контроля версий и CI/CD
+- Git репозитории для каждого сервиса
+- Встроенный CI/CD (GitLab CI)
+- Container Registry для Docker образов
+- Webhooks и триггеры сборок
+
+##### 2. **HashiCorp Vault** - Управление секретами
+- Безопасное хранение паролей, ключей доступа
+- Динамические секреты
+- Интеграция с GitLab через JWT auth
+
+##### 3. **Sonatype Nexus** - Репозиторий артефактов
+- Хранение Docker образов
+- Проксирование внешних репозиториев
+- Версионирование артефактов
+- Поддержка múltiples форматов (npm, Maven, Docker)
+
+##### 4. **Self-hosted GitLab Runners** - Агенты сборки
+- Развертывание на собственных серверах
+- Параллельный запуск сборок
+- Кастомные Docker образы для сборки
+
+#### Архитектура взаимодействия
+
+```mermaid
+graph LR
+    A[Developer] --> B[GitLab Repo]
+    B --> C[GitLab CI]
+    C --> D[HashiCorp Vault]
+    C --> E[Self-hosted Runners]
+    E --> F[Nexus Repository]
+    F --> G[Production]
+```
+
+#### Реализация требований
+
+| Требование | Реализация |
+|------------|------------|
+| Облачная система | GitLab.com или self-hosted |
+| Git репозитории | GitLab (по репозиторию на сервис) |
+| Сборка по событию | GitLab CI webhooks |
+| Сборка по кнопке | GitLab CI manual triggers |
+| Настройки на сборку | CI/CD variables + HashiCorp Vault |
+| Шаблоны сборок | `.gitlab-ci.yml` templates |
+| Секретные данные | HashiCorp Vault + GitLab protected vars |
+| Несколько конфигураций | Multiple jobs в pipeline |
+| Кастомные шаги | Custom scripts в CI jobs |
+| Собственные Docker образы | GitLab Container Registry |
+| Свои агенты сборки | Self-hosted GitLab Runners |
+| Параллельные сборки | Parallel stages/jobs |
+| Параллельные тесты | Parallel test jobs |
+
+### Преимущества решения
+
+- **Единая платформа** - Git + CI/CD в GitLab
+- **Enterprise безопасность** - HashiCorp Vault для секретов
+- **Универсальность** - Nexus Repository для всех артефактов
+- **Гибкость** - Self-hosted runners под свой стек
+- **Масштабируемость** - Параллельные pipeline
+
+
 ## Задача 2: Логи
 
 Предложите решение для обеспечения сбора и анализа логов сервисов в микросервисной архитектуре.
@@ -41,6 +106,45 @@
 - возможность дать ссылку на сохранённый поиск по записям логов.
 
 Обоснуйте свой выбор.
+
+### Стек ELK + Vector + Docker
+
+**Компоненты:**
+1. **Vector** - сбор и обработка логов
+2. **Elasticsearch** - хранение и поиск логов
+3. **Kibana** - UI для анализа логов
+4. **Docker** - источник логов (stdout)
+
+### Архитектура
+```
+[Микросервисы] → [Docker stdout] → [Vector] → [Elasticsearch] ← [Kibana UI]
+```
+
+
+### Реализация требований
+
+| Требование | Реализация |
+|------------|------------|
+| Центральный сбор со всех хостов | Vector агенты на каждом хосте |
+| Минимальные требования к приложениям | Сбор из Docker stdout |
+| Гарантированная доставка | Vector с persisted buffers |
+| Поиск и фильтрация | Elasticsearch индексы + Kibana Discover |
+| Пользовательский интерфейс | Kibana с ролевым доступом |
+| Ссылки на сохранённый поиск | Kibana saved searches + sharing links |
+
+### Обоснование выбора
+
+- **Vector вместо Logstash/Filebeat** - выше производительность, built-in гарантии доставки
+- **Elasticsearch** - промышленный стандарт для логов, полнотекстовый поиск
+- **Kibana** - мощный UI с saved searches, sharing, dashboards
+- **Docker stdout** - нулевая настройка приложений, стандартный подход
+
+### Плюсы решения
+- Production-ready стек
+- Масштабируемость Elasticsearch
+- Гибкость Vector pipelines
+- Разделение доступа в Kibana
+- Стандартные интеграции
 
 ## Задача 3: Мониторинг
 
