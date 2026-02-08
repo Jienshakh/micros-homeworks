@@ -1,0 +1,38 @@
+{
+  "title": "API Monitoring",
+  "panels": [
+    {
+      "title": "Security Status",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "up{job=\"security\"}",
+          "legendFormat": "Security"
+        }
+      ]
+    },
+    {
+      "title": "Uploader Status",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8},
+      "targets": [
+        {
+          "expr": "up{job=\"uploader\"}",
+          "legendFormat": "Uploader"
+        }
+      ]
+    },
+    {
+      "title": "Storage Status",
+      "type": "graph",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+      "targets": [
+        {
+          "expr": "up{job=\"storage\"}",
+          "legendFormat": "Storage"
+        }
+      ]
+    }
+  ]
+}

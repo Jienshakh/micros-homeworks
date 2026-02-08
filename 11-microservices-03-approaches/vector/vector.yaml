@@ -1,0 +1,41 @@
+api:
+  enabled: true
+  address: 0.0.0.0:8686
+
+sources:
+  docker_logs:
+    type: docker_logs
+    auto_partial_merge: true
+    include_containers:
+      - ${PROJECT_NAME}-gateway
+      - ${PROJECT_NAME}-security
+      - ${PROJECT_NAME}-uploade
+      - ${PROJECT_NAME}-createbuckets
+      - ${PROJECT_NAME}-storage
+
+transforms:
+  process_logs:
+    type: remap
+    inputs:
+      - docker_logs
+    source: |
+      # Выбираем один из вариантов
+      del(.label)  # вариант 1: удалить
+      # .label = encode_json(.label)  # вариант 2: преобразовать в строку
+
+
+sinks:
+  elasticsearch:
+    inputs:
+      - process_logs
+    type: elasticsearch
+    endpoints: [http://elasticsearch:9200]
+    api_version: "auto"
+    auth:
+      strategy: basic
+      user: elastic
+      password: "${ELASTIC_PASSWORD}" 
+    tls:
+      verify_certificate: false
+      verify_hostname: false
+

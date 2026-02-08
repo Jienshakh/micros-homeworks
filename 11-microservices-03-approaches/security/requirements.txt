@@ -1,0 +1,7 @@
+Flask>=2.2
+Jinja2>=3.1
+PyJwt==2.0.1
+passlib==1.7.4
+PyJWT==2.0.1
+prometheus-flask-exporter>=0.22
+
