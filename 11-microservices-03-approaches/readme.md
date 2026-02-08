@@ -1,12 +1,21 @@
-# Как запускать
+# Система загрузки файлов с API Gateway
+
+## Оглавление
+- [Как запустить](#как-запустить)
+- [Тестирование API](#тестирование-api)
+- [Мониторинг (Prometheus + Grafana)](#мониторинг-prometheus--grafana)
+- [Логи (Vector + ElasticSearch + Kibana)](#логи-vector--elasticsearch--kibana)
+- [Разбор конфигурации nginx](#разбор-конфигурации-nginx)
+
+
+## Как запускать
 ```
 docker-compose up --build
 ```
 
-# Как тестировать
+## Тестирование API
 
-## Login
-Получить токен
+### Получение токена
 ```
 curl -X POST -H 'Content-Type: application/json' -d '{"login":"bob", "password":"qwe123"}' http://localhost/token
 ```
@@ -16,7 +25,7 @@ $ curl -X POST -H 'Content-Type: application/json' -d '{"login":"bob", "password
 eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJib2IifQ.hiMVLmssoTsy1MqbmIoviDeFPvo-nCd92d4UFiN2O2I
 ```
 
-## Upload image
+### Загрузка файла
 Использовать полученный токен для загрузки картинки
 ```
 curl -X POST -H 'Authorization: Bearer <TODO: INSERT TOKEN>' -H 'Content-Type: octet/stream' --data-binary @<image_name.jpg> http://localhost/upload
@@ -27,7 +36,7 @@ $ curl -X POST -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.ey
 {"filename":"759399ed-3db9-4e20-87b4-03cb1755d38b.jpg"}
 ```
 
- ## Download image
+### Скачивание файла
 Загрузить картинку и проверить что она открывается
 ```
 curl -X GET -H 'Authorization: Bearer e<TODO: INSERT TOKEN>'  http://localhost/v1/user/<filename_from_previous_step> -o out.jpg
@@ -44,6 +53,63 @@ $ ls -la
 -rw-r--r--. 1 dodinaev dodinaev 13365 Feb  1 06:52 5ca2a2d650c753ada3f74ca7a4bd7aa0.jpg
 -rw-r--r--. 1 dodinaev dodinaev 13365 Feb  1 15:48 out.jpg
 ```
+
+## Мониторинг (Prometheus + Grafana)
+
+### Доступ к интерфейсам
+- **Prometheus UI**: http://localhost:9090
+  - Проверка targets: http://localhost:9090/targets
+  - Запрос метрик: http://localhost:9090/graph
+- **Grafana**: http://localhost:3000
+  - Логин: `admin` (пароль из .env файла)
+  - Дашборд "API Monitoring" предустановлен
+
+### Собираемые метрики
+1. **Security сервис** - `security:3000/metrics`
+2. **Uploader сервис** - `uploader:3000/metrics`
+3. **Storage (MinIO)** - `storage:9000/minio/v2/metrics/cluster`
+
+### Конфигурация
+- `prometheus/prometheus.yml` - настройка сбора метрик
+- `grafana/dashboards/api-monitoring.json` - дашборд с графиками
+- `grafana/provisioning/` - автоматическая настройка Grafana
+
+## Логи (Vector + ElasticSearch + Kibana)
+
+### Доступ к интерфейсам
+- **Kibana**: http://localhost:5601
+  - Логин: `elastic` (пароль из .env файла)
+- **ElasticSearch API**: http://localhost:9200
+- **Vector API**: http://localhost:8686
+
+### Собираемые логи
+Логи собираются со всех сервисов через Docker stdout:
+- gateway (nginx)
+- security
+- uploader
+- storage (MinIO)
+- createbuckets
+
+### Конфигурация
+- `vector/vector.yaml` - настройка сбора и обработки логов
+- Поле `label` автоматически удаляется для избежания конфликтов в ElasticSearch
+
+## Архитектура системы
+
+### Сервисы
+1. **gateway** (nginx) - единая точка входа, аутентификация
+2. **security** - JWT токены и их валидация
+3. **uploader** - загрузка файлов в MinIO
+4. **storage** (MinIO) - S3-хранилище
+5. **vector** - сбор и обработка логов
+6. **elasticsearch** - хранение логов
+7. **kibana** - визуализация логов
+8. **prometheus** - сбор метрик
+9. **grafana** - визуализация метрик
+
+### Сети и порты
+- Публичные порты: 80 (API), 3000 (Grafana), 5601 (Kibana), 9090 (Prometheus)
+- Внутренние порты: 9200 (ElasticSearch), 8686 (Vector)
 
 # Разбор кода nginx.conf
 
